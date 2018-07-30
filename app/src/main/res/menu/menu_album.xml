@@ -1,0 +1,13 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="com.example.yjkim.pulp1.AlbumActivity">
+
+    <item android:title="환경설정"
+        app:showAsAction="never"
+        android:id="@+id/action_settings"/>
+    <item android:title="나가기"
+        app:showAsAction="never"
+        android:id="@+id/action_quit"/>
+
+</menu>

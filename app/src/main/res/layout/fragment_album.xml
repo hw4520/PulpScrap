@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/constraintLayout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".AlbumActivity$FragmentPage">">
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_height="match_parent"
+        android:layout_width="match_parent"
+        android:layout_marginBottom="15dp"
+        android:layout_marginLeft="30dp"
+        android:layout_marginRight="30dp"
+        android:layout_marginTop="15dp">
+
+        <ImageView android:layout_height="0dp"
+            android:layout_width="match_parent"
+            android:id="@+id/albumView"
+            android:layout_weight="6"
+            android:background="#ddd"
+            android:onClick="onClick"/>
+
+        <EditText android:layout_height="0dp"
+            android:layout_width="match_parent"
+            android:id="@+id/albumMemo"
+            android:layout_marginTop="15dp"
+            android:layout_weight="3"
+            android:background="#ddf5dd"
+            android:lines="7"/>
+    </LinearLayout>
+
+</LinearLayout>
