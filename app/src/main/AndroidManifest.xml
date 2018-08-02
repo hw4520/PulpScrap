@@ -2,9 +2,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.project.pulp.pulp">
 
+    <uses-permission android:name="android.permission.CAMERA"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
     <application
         android:allowBackup="true"
-        android:icon="@mipmap/ic_launcher_foreground"
+        android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
@@ -18,7 +21,6 @@
         </activity>
 
         <activity android:name=".MainActivity">
-
         </activity>
 
         <activity android:name=".AlbumActivity"
@@ -26,6 +28,20 @@
             android:theme="@style/AppTheme.NoActionBar">
 
         </activity>
+
+        <activity android:name=".PlusActivity" android:label="상단에 나올글자"/>
+        <!--모든 액티비티 명시-->
+        <provider
+            android:authorities="com.project.pulp.pulp"
+            android:name="android.support.v4.content.FileProvider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_path"/>
+        </provider>
+        <!--프로바이더 작성. authorities에 패키지명을 적어준다.
+        res폴더 하위에 xml폴더를 생성하고 file_path파일을 생성해 권한을 주고자 하는 폴더를 지정한다  -->
 
     </application>
 

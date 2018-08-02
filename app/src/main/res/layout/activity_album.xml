@@ -1,46 +1,92 @@
-<?xml version="1.0" encoding="utf-8"?>
-<android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/main_content"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
+<?xml version="1.0" encoding="UTF-8"?>
+<android.support.design.widget.CoordinatorLayout
+    tools:context=".AlbumActivity"
     android:fitsSystemWindows="true"
-    tools:context=".AlbumActivity">
+    android:layout_height="match_parent"
+    android:layout_width="match_parent"
+    android:id="@+id/main_content"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
 
     <android.support.design.widget.AppBarLayout
-        android:id="@+id/appbar"
-        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingTop="@dimen/appbar_padding_top"
-        android:theme="@style/AppTheme.AppBarOverlay">
+        android:layout_width="match_parent"
+        android:id="@+id/appbar"
+        android:theme="@style/AppTheme.AppBarOverlay"
+        android:paddingTop="@dimen/appbar_padding_top">
 
         <android.support.v7.widget.Toolbar
-            android:id="@+id/toolbar"
-            android:layout_width="match_parent"
+            app:title="@string/app_name"
             android:layout_height="?attr/actionBarSize"
-            android:layout_weight="1"
-            android:background="?attr/colorPrimary"
-            app:layout_scrollFlags="scroll|enterAlways"
+            android:layout_width="match_parent"
+            android:id="@+id/toolbar"
             app:popupTheme="@style/AppTheme.PopupOverlay"
-            app:title="@string/app_name">
-
+            app:layout_scrollFlags="scroll|enterAlways"
+            android:background="?attr/colorPrimary"
+            android:layout_weight="1">
         </android.support.v7.widget.Toolbar>
 
     </android.support.design.widget.AppBarLayout>
 
-    <android.support.v4.view.ViewPager
-        android:id="@+id/container"
+
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior" />
+        android:layout_marginTop="60dp">
 
-    <android.support.design.widget.FloatingActionButton
-        android:id="@+id/fab"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="end|bottom"
-        android:layout_margin="@dimen/fab_margin"
-        app:srcCompat="@android:drawable/ic_menu_save" />
+        <android.support.v4.view.ViewPager
+            android:layout_height="match_parent"
+            android:layout_width="match_parent"
+            android:id="@+id/container"
+            app:layout_behavior="@string/appbar_scrolling_view_behavior"/>
 
+        <!--
+
+        <com.example.dbwjd.pulpex111.CustomViewPager
+            android:id="@+id/container"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:layout_behavior="@string/appbar_scrolling_view_behavior">
+        </com.example.dbwjd.pulpex111.CustomViewPager>
+
+    -->
+        <!--
+
+            <android.support.design.widget.FloatingActionButton
+                android:layout_height="wrap_content"
+                android:layout_width="wrap_content"
+                android:id="@+id/fab"
+                app:srcCompat="@android:drawable/ic_menu_save"
+                android:layout_margin="@dimen/fab_margin"
+                android:layout_gravity="end|bottom"/>
+        -->
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginLeft="10dp"
+            android:layout_marginTop="20dp"
+            >
+            <ImageView
+                android:id="@+id/btnplus"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:src="@drawable/plus"
+                android:layout_marginBottom="5dp"/>
+            <ImageView
+                android:id="@+id/btnminus"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:src="@drawable/minus_1"
+                android:layout_marginBottom="5dp"/>
+            <ImageView
+                android:id="@+id/btnlist"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:src="@drawable/menu"/>
+        </LinearLayout>
+
+    </RelativeLayout>
 </android.support.design.widget.CoordinatorLayout>

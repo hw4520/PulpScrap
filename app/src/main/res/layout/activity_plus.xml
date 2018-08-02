@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".PlusActivity"
+    >
+    <!--    <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:layout_marginTop="30dp"
+            >-->
+    <!--<TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="프로필사진"
+        android:layout_marginTop="20dp"
+        android:textSize="40sp"
+        android:gravity="center_horizontal"
+        android:textColor="@color/color_MAIN"
+        />
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="사진 한장을 골라주세요!"
+        android:textSize="20sp"
+        android:gravity="center_horizontal"
+        android:textColor="@color/color_BLACK"/>-->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_gravity="center"
+        android:layout_marginTop="30dp"
+        >
+
+        <!--마지막에 오는 뷰가 가장 위에 올라간다.-->
+        <ImageView
+            android:layout_centerHorizontal="true"
+            android:id="@+id/user_image"
+            android:layout_width="300dp"
+            android:layout_height="300dp"
+            android:layout_gravity="center"
+            android:maxWidth="300dp"
+            android:maxHeight="300dp"
+            android:adjustViewBounds="true"
+            android:src="@drawable/newimage"
+            android:onClick="addPic"/>
+        <!--클릭하면 자바에서 "onClick" 메소드 실행 다른 이름으로 설정해도 괜찮다
+        출처 - https://hashcode.co.kr/questions/618/xml%EC%97%90%EC%84%9C-androidonclick%ED%95%98%EB%8A%94-%EA%B1%B0%EB%9E%91-setonclicklistener%EC%9D%98-%EC%B0%A8%EC%9D%B4%EB%8A%94-%EB%AD%94%EA%B0%80%EC%9A%94
+        -->
+
+        <!--
+        <Button
+            android:id="@+id/btn_UploadPicture"
+            android:layout_width="200dp"
+            android:layout_height="30dp"
+            android:layout_gravity="center"
+            android:background="@color/color_button"
+            android:text="사진 선택"
+            android:onClick="onClick"
+            android:textSize="15sp"/>-->
+    </LinearLayout>
+    <!--
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginLeft="10dp"
+                android:layout_marginTop="20dp"
+                >
+                <ImageView
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:src="@drawable/plus"
+                    android:layout_marginBottom="5dp"/>
+                <ImageView
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:src="@drawable/minus_1"
+                    android:layout_marginBottom="5dp"/>
+                <ImageView
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:src="@drawable/menu"/>
+            </LinearLayout>
+
+    -->
+
+    <!--
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center">
+    </LinearLayout>-->
+
+    <EditText
+        android:id="@+id/tvex1"
+        android:layout_width="350dp"
+        android:layout_height="100dp"
+        android:layout_gravity="center"
+        android:layout_marginBottom="50dp"
+        android:layout_marginLeft="20dp"
+        android:layout_marginRight="20dp"
+        android:textSize="20sp"
+        android:layout_centerInParent="true"
+        android:layout_alignParentBottom="true"
+        android:hint="메모를 추가하세요"
+        android:scrollHorizontally="true"/>
+    <!--
+            <ImageView
+                android:id="@+id/ivtext"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/test1"
+                />
+    -->
+    <!--    </LinearLayout>-->
+    <Button
+        android:id="@+id/btnscrap"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="S C R A P"
+        android:textSize="25sp"
+        android:textColor="#2c45b0"
+        android:background="#81abe9"
+        android:layout_alignParentBottom="true"
+        />
+
+</RelativeLayout>

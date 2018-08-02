@@ -137,6 +137,8 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onCreate(SQLiteDatabase sqLiteDatabase) {
             sqLiteDatabase.execSQL("create table IF NOT EXISTS folder(num INTEGER PRIMARY KEY AUTOINCREMENT,subject char(10));");
+            sqLiteDatabase.execSQL("create table IF NOT EXISTS scrap (num INTEGER PRIMARY KEY AUTOINCREMENT, subject int, photo char(500), memo char(1000));");
+
         }
 
         @Override
@@ -209,6 +211,8 @@ public class MainActivity extends AppCompatActivity {
                         relativeLayout.setOnClickListener(new View.OnClickListener() {
                             @Override
                             public void onClick(View v) {
+                                Intent intent = new Intent(getApplicationContext(), AlbumActivity.class);
+                                startActivity(intent);
 
                             }
                         });

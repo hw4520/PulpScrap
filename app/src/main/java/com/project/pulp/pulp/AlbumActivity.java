@@ -1,31 +1,25 @@
 package com.project.pulp.pulp;
 
 import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.graphics.Color;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
-
+import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
-import android.os.Bundle;
-import android.util.Log;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.Switch;
-import android.widget.TextView;
 import android.widget.Toast;
 
 public class AlbumActivity extends AppCompatActivity {
@@ -41,11 +35,16 @@ public class AlbumActivity extends AppCompatActivity {
 
     // SQLite 변수 생성
     SQLiteDatabase sqliteDatabase;
-    DBHelper dbHelper;
+    myDBHelper dbHelper;
 
     // DB 컬럼 개수
     String count;
     int countNum, swipeNum;
+
+
+    //버튼 3가지
+    ImageView btnplus, btnminus, btnlist;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,12 +63,12 @@ public class AlbumActivity extends AppCompatActivity {
         setSupportActionBar(toolbar); //툴바를 액션바와 같게 만들어 준다.
 
         // DB객체 생성
-        dbHelper = new DBHelper(this);
+        dbHelper = new myDBHelper(this);
 
         // DB 개수 구하기
         sqliteDatabase = dbHelper.getReadableDatabase();
         Cursor cursor;
-        cursor = sqliteDatabase.rawQuery("select count(*) from food",null);
+        cursor = sqliteDatabase.rawQuery("select count(*) from scrap",null);
 
         while (cursor.moveToNext()){
             count = cursor.getString(0);
@@ -86,6 +85,8 @@ public class AlbumActivity extends AppCompatActivity {
         viewPager = (ViewPager) findViewById(R.id.container);
         viewPager.setAdapter(swipeAdapter);
 
+
+        /*
         // 저장하기 버튼 효과
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -95,6 +96,23 @@ public class AlbumActivity extends AppCompatActivity {
                 Toast.makeText(getApplicationContext(), "저장되었습니다", Toast.LENGTH_SHORT).show();
                 // Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
                 //        .setAction("Action", null).show();
+            }
+        });
+*/
+
+
+
+        //버튼에 설정
+
+        btnplus=(ImageView) findViewById(R.id.btnplus);
+        btnminus=(ImageView) findViewById(R.id.btnminus);
+        btnlist=(ImageView) findViewById(R.id.btnlist);
+
+        btnplus.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent= new Intent(getApplicationContext(), PlusActivity.class);
+                startActivity(intent);
             }
         });
 
@@ -210,21 +228,20 @@ public class AlbumActivity extends AppCompatActivity {
 
 
     // SQLite 메소드 설정
-    public class DBHelper extends SQLiteOpenHelper {
+    public class myDBHelper extends SQLiteOpenHelper {
 
-        public DBHelper(Context context){
+        public myDBHelper(Context context){
             super(context,"pulp",null,1);
         }
 
         @Override
         public void onCreate(SQLiteDatabase sqLiteDatabase) {
-            sqLiteDatabase.execSQL("create table IF NOT EXISTS food " +
-                    "(num INTEGER PRIMARY KEY AUTOINCREMENT, photo BLOB, memo char(100));");
+            sqLiteDatabase.execSQL("create table IF NOT EXISTS scrap (num INTEGER PRIMARY KEY AUTOINCREMENT, subject int, photo char(500), memo char(1000));");
         }
 
         @Override
         public void onUpgrade(SQLiteDatabase sqLiteDatabase, int i, int i1) {
-            sqLiteDatabase.execSQL("drop table if exists food");
+            sqLiteDatabase.execSQL("drop table if exists scrap");
             onCreate(sqLiteDatabase);
         }
 
@@ -232,7 +249,7 @@ public class AlbumActivity extends AppCompatActivity {
         // DB insert 메소드
         public void insertAlbum(EditText albumMemo){
             sqliteDatabase = getWritableDatabase();
-            sqliteDatabase.execSQL("insert into food (memo) values ('"+albumMemo.getText().toString()+"');");
+            sqliteDatabase.execSQL("insert into scrap values ('','1','','"+albumMemo.getText().toString()+"');");
         }
 
 
@@ -244,7 +261,7 @@ public class AlbumActivity extends AppCompatActivity {
             Cursor cursor;
 
             // DB에 있는 데이터를 쉽게 처리하기 위해 Cursor를 사용하여 테이블에 있는 모든 데이터 출력
-            cursor = sqliteDatabase.rawQuery("select memo from food where num=((select max(num) from food)-'+sectionNumber+')", null);
+            cursor = sqliteDatabase.rawQuery("select * from scrap where num=((select max(num) from scrap)-'+sectionNumber+')", null);
 
             return cursor;
 
@@ -256,7 +273,7 @@ public class AlbumActivity extends AppCompatActivity {
             // DB 개수 구하기
             sqliteDatabase = getReadableDatabase();
             Cursor cursor;
-            cursor = sqliteDatabase.rawQuery("select count(*) from food",null);
+            cursor = sqliteDatabase.rawQuery("select count(*) from scrap",null);
 
             while (cursor.moveToNext()){
                 count = cursor.getString(0);
