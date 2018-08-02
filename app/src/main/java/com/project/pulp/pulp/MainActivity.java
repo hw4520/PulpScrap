@@ -41,6 +41,9 @@ public class MainActivity extends AppCompatActivity {
     int layoutSize = 2; //한 줄당 폴더 갯수
     int layoutCount; //레이아웃 갯수
 
+    int floderNum;
+    String folderName;
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         super.onCreateOptionsMenu(menu);
@@ -137,8 +140,8 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onCreate(SQLiteDatabase sqLiteDatabase) {
             sqLiteDatabase.execSQL("create table IF NOT EXISTS folder(num INTEGER PRIMARY KEY AUTOINCREMENT,subject char(10));");
-            sqLiteDatabase.execSQL("create table IF NOT EXISTS scrap (num INTEGER PRIMARY KEY AUTOINCREMENT, subject int, photo char(500), memo char(1000));");
-
+            sqLiteDatabase.execSQL("create table IF NOT EXISTS scrap " +
+                    "(subject INTEGER, num INTEGER, photo char(500), memo char(100));");
         }
 
         @Override
@@ -146,6 +149,19 @@ public class MainActivity extends AppCompatActivity {
             sqLiteDatabase.execSQL("drop table if exists folder");
             onCreate(sqLiteDatabase);
         }
+
+        public int folderNum(String subject){
+            sqLiteDatabase = getReadableDatabase();
+            Cursor cursor;
+            cursor = sqLiteDatabase.rawQuery("select num from folder where subject='\"+subject.getText().toString()+\"'", null);
+
+            while (cursor.moveToNext()){
+                count = cursor.getString(0);
+            }
+            int viewNum = Integer.parseInt(count);
+            return viewNum;
+        }
+
     }//end class
 
     public class GallaryMode {
@@ -175,7 +191,7 @@ public class MainActivity extends AppCompatActivity {
                     cursor = sqLiteDatabase.rawQuery("select subject from folder order by num desc LIMIT "+startRow+","+layoutSize,null);
                     while (cursor.moveToNext()){
                         //폴더명 띄우기
-                        String folderName = cursor.getString(0);
+                        folderName = cursor.getString(0);
                         TextView txt = new TextView(MainActivity.this);
                         txt.setText(folderName);
                         txt.setTextSize(30);
@@ -208,10 +224,13 @@ public class MainActivity extends AppCompatActivity {
                         relativeLayout.addView(txt);
                         linearLayout.addView(relativeLayout);
 
+                        floderNum = myDBHelper.folderNum(folderName);
+
                         relativeLayout.setOnClickListener(new View.OnClickListener() {
                             @Override
                             public void onClick(View v) {
                                 Intent intent = new Intent(getApplicationContext(), AlbumActivity.class);
+                                intent.putExtra("folderNum", floderNum);
                                 startActivity(intent);
 
                             }

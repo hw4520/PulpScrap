@@ -81,6 +81,12 @@ public class PlusActivity extends AppCompatActivity {
     myDBHelper myHelper;
     SQLiteDatabase sqlDB;
 
+    int folderNum=3;
+
+    // MaxNum 구하는 변수
+    int maxNum;
+    String stMaxNum;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -100,13 +106,15 @@ public class PlusActivity extends AppCompatActivity {
             public void onClick(View view) {
 
                 //원래 폴더숫자 디비에서 챙겨와야함.
+                maxNum = myHelper.getMaxNum();
+
 
                 String sql="";
                 if (currentPhotoPath==null){
-                    sql="insert into scrap(subject, photo, memo) values ('1','"+imagePath+"','"+tvnote.getText()+"')";
+                    sql="insert into scrap(subject, photo, memo, num) values ('3','"+imagePath+"','"+tvnote.getText()+"', "+maxNum+")";
 
                 }else {
-                    sql="insert into scrap(subject, photo, memo) values ('1','"+currentPhotoPath+"','"+tvnote.getText()+"')";
+                    sql="insert into scrap(subject, photo, memo, num) values ('3','"+currentPhotoPath+"','"+tvnote.getText()+"', "+maxNum+")";
                 }
                 sqlDB.execSQL(sql);
 
@@ -584,11 +592,33 @@ public class PlusActivity extends AppCompatActivity {
             Toast.makeText(context, "버전이 올라갔습니다.", Toast.LENGTH_SHORT).show();*/
 
         }
-    }
+
+        public int getMaxNum(){
+            sqlDB = getReadableDatabase();
+            Cursor cursor;
+            cursor = sqlDB.rawQuery("select max(num) from scrap where subject="+folderNum+"", null);
+
+            while (cursor.moveToNext()){
+                stMaxNum = cursor.getString(0);
+            }
+
+            int MaxNum = Integer.parseInt(stMaxNum);
+
+            if (MaxNum==0){
+                MaxNum=1;
+                return MaxNum;
+            } else {
+                MaxNum=+1;
+                return MaxNum;
+            }
+        }
+
+
+    } // end of DB 메소드
 
 
 
 
-}
+} // end of CLASS
 
 
