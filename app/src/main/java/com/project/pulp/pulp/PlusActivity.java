@@ -21,6 +21,7 @@ import android.provider.MediaStore;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -34,37 +35,7 @@ import java.util.Date;
 
 public class PlusActivity extends AppCompatActivity {
 
-    /*
-    전체 코드 참고 - http://superwony.tistory.com/5
-    사진 클릭시 onClick(){ 대화상자 => 사진촬영, 앨범선택, 취소 }
-    사진촬영 클릭=>selectPhoto(){
-        createImageFile() : 사진 촬영용 폴더생성, 파일 생성.
-        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE)
-        startActivityForResult(intent, CAMERA_CODE) :인텐트를 통해 사진촬영앱에 연결, 들고온 경로와 파일에 사진저장.
-    }
-    =>onActivityResult(){
-        리퀘스트 코드가 CAMERA_CODE일때,
-        getPictureForPhoto() : 사진촬영앱을 통해 저장된 사진. 경로를 통해 불러오고 이미지뷰에 저장
-    }
-     */
-
-
-    //현재 오류
-    //crop 미적용
-    //현재 흐름은 사진 직접 저장. 수정버젼은 사진은 temp로 저장하고 crop된 사진을 저장. 그 경로를 db에 저장할것.
-
-
-    //device File Explorer로 파일 올려두면 에뮬레이터에서 적용이 안됨. 파일에서 보이는데도 적용이 안됨.
-    //exifOrientationToDegrees 사진촬영 하면 시계 반대방향으로 90도 돌아감.(에뮬레이터 설정자체가 문제인듯.)
-
-    //sqlite에서 불러온 글자는 제대로 뜬다. blob 그림이 제대로 안뜬다.
-    //sqlite에 글자저장이 깨져서 저장됨. 불러올때는 바로 불러와짐.
-
-
-
     private Uri photoUri;
-
-
     private Uri cameraUri;
     private Uri galleryUri;
     private String currentPhotoPath;//실제 사진 파일 경로
@@ -76,12 +47,10 @@ public class PlusActivity extends AppCompatActivity {
 
     EditText tvnote;
     Button btnscrap;
-//    ImageView ivtestt;
-//    Button btnimage;
     myDBHelper myHelper;
     SQLiteDatabase sqlDB;
 
-    int folderNum=3;
+    int folderNum=1;
 
     // MaxNum 구하는 변수
     int maxNum;
@@ -92,10 +61,8 @@ public class PlusActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_plus);
 
-
         myHelper=new myDBHelper(this);
         sqlDB=myHelper.getWritableDatabase();
-
 
         ivImage=(ImageView)findViewById(R.id.user_image);
         tvnote=(EditText)findViewById(R.id.tvex1);
@@ -108,7 +75,6 @@ public class PlusActivity extends AppCompatActivity {
                 //원래 폴더숫자 디비에서 챙겨와야함.
                 maxNum = myHelper.getMaxNum();
 
-
                 String sql="";
                 if (currentPhotoPath==null){
                     sql="insert into scrap(subject, photo, memo, num) values ('3','"+imagePath+"','"+tvnote.getText()+"', "+maxNum+")";
@@ -116,6 +82,7 @@ public class PlusActivity extends AppCompatActivity {
                 }else {
                     sql="insert into scrap(subject, photo, memo, num) values ('3','"+currentPhotoPath+"','"+tvnote.getText()+"', "+maxNum+")";
                 }
+               // sqlDB.execSQL("delete from scrap");
                 sqlDB.execSQL(sql);
 
                 sqlDB.close();
@@ -124,71 +91,7 @@ public class PlusActivity extends AppCompatActivity {
 
             }
         });
-
-
-        //db에서 select되는지 확인한 코드.
-/*        ivtestt=(ImageView)findViewById(R.id.ivtext);
-        ivtestt.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Cursor cursor;
-                cursor=sqlDB.rawQuery("select * from scrap ;",null);
-
-
-                if(cursor.moveToNext()){*/
-                    /*
-                    byte[] photo=cursor.getBlob(1);
-                    ByteArrayInputStream imageStream = new ByteArrayInputStream(photo);
-//                    BitmapFactory.Options options = new BitmapFactory.Options();
-//                    options.inJustDecodeBounds = false;
-//                    Bitmap theImage= BitmapFactory.decodeStream(imageStream, null, options);
-//                    ivtestt.setImageBitmap(theImage);
-
-                        BitmapFactory.Options options = new BitmapFactory.Options();
-                        options.inJustDecodeBounds = true;
-                        BitmapFactory.decodeStream(imageStream, null, options);
-                        try {
-                        imageStream.close();
-                    } catch (Exception e) {
-                    }
-                    options.inJustDecodeBounds = false;
-                    Bitmap theImage= BitmapFactory.decodeStream(imageStream, null, options);
-                    ivtestt.setImageBitmap(theImage);
-
-
-                    //글자는 제대로 뜬다. 그림이 제대로 안뜬다.
-                    Log.i("ahn",cursor.getString(3));
-            tvnote.setText(cursor.getString(3));
-*/
- /*
-                File imgFile = new  File(cursor.getString(2));
-
-                if(imgFile.exists()){
-                    Bitmap myBitmap = BitmapFactory.decodeFile(imgFile.getAbsolutePath());
-                    ivtestt.setImageBitmap(myBitmap);
-
-                }*/
-
-/*
-                    Bitmap myBitmap = BitmapFactory.decodeFile(cursor.getString(2));
-
-                    ivtestt.setImageBitmap(myBitmap);
-                }
-                cursor.close();
-                //이미지 저장
-                //http://www.masterqna.com/android/82777/sqlite-%EC%9D%B4%EB%AF%B8%EC%A7%80-%EC%A0%80%EC%9E%A5-%EC%A7%88%EB%AC%B8%EB%93%9C%EB%A6%BD%EB%8B%88%EB%8B%A4
-
-            }
-        });
-                sqlDB.close();
-*/
-
-
-
-
     }
-
-
 
     public void addPic(View view) {
 
@@ -217,17 +120,10 @@ public class PlusActivity extends AppCompatActivity {
                     }
                 })
                 .show();
-        //Dialog 하위 클래스 AlertDialog 사용
-        //AlertDialog는 최대 3개의 버튼을 가질수 있다.
-        //이름을 지정하여 객체를 생성했을때- AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         //https://developer.android.com/guide/topics/ui/dialogs?hl=ko
-
     }
 
     /*
-    카메라로 찍은 사진을 가져오는 경우 인텐트를 통해 카메라를 호출합니다.
-    'CAMERA_CODE'는 requestCode 선택한 사진에 대한 요청 값을 구분하는 용도입니다.
-
     private void selectPhoto() {
         Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         startActivityForResult(intent, CAMERA_CODE);
@@ -238,37 +134,6 @@ public class PlusActivity extends AppCompatActivity {
     이를 수행하기 위해선 'AndroidMenifest.xml'에 명시해야합니다.
     추가 정보- http://gogorchg.tistory.com/entry/Android-FileProvider-androidosFileUriExposedException
      */
-
-    //인텐트와 프로바이더 설명
-    //intent인텐트는 주로 새로운 액티비티를 생성, 새로운 서비스 생성, 브로드캐스트 전달에 사용된다.
-    //암시적 액티비티
-    //명시적 액티비티의 개념이 두 액티비티를 사용자가 직접 생성하고 코딩하는 것이라면, 암시적 인텐트는
-    //약속된 액션을 지정하여 안드로이드에서 제공하는 기존 응용프로그램을 실행하는 것이다.
-    //흐름 -  메인액티비티의 Intent intent= new Intent(실행하고자 하는 액션, Uri.parse());
-    //or Intent intent= new Intent(실행하고자 하는 액션);
-    //intent.putExtra("Extra이름", "내용")
-    //intent.setData(Uri.parse())
-    //startActivity(intent)
-
-    //명시적 액티비티
-    //흐름 - 메인액티비티의 인텐트 putExtra() 소통할 데이터를 담는다
-    // =>startActivityForResult(){ 데이터를 돌려받기 위해 사용되는 액티비티호출메소드 }
-    // =>세컨트액티비티의 인텐트 getExtra() 데이터를 받는 메소드
-    // =>세컨드 액티비티의 인텐트 putExtra() 메인 액티비티로 반환할 데이터를 담는다.
-    // => setResult(코드, 인텐트명) 메인액티비티로 데이터를 돌려준다.
-    // => onActivityResult(int requestCode, int resultCode, Intent data){
-    //    getExtra() 데이터를 돌려받는다.
-    // }
-    //출처 - 안드로이드 프로그래밍(책) 412p
-    //https://developer.android.com/guide/components/intents-filters?hl=ko
-
-    //android.provider.MediaStore 프로바이더의 MediaStore 클래스의 ACTION_IMAGE_CAPTURE 상수
-    //안드로이드의 4대 컴포넌트 액티비티, 서비스, 브로드캐스트 리시버, 콘텐트 프로바이더
-    //안드로이드 응용 프로그램은 데이터를 자기 내부에서만 공유할수 있기때문에 프로그램의 콘텐트 프로바이더끼리
-    //소통하며 소통의 창구는 Uri이다. 콘텐트 프로바이더에서 처리된 데이터는 일반적으로 데이터베이스 또는 파일로 저장된다.
-    //출처 - 안드로이드 프로그래밍(책) 391p
-
-
 
     /*  카메라로 찍은 사진을 가져오는 경우
         인텐트를 통해 카메라를 호출합니다.
@@ -293,7 +158,7 @@ public class PlusActivity extends AppCompatActivity {
                 } catch (IOException ex) {
                 }
                 if (photoFile != null) {
-                    photoUri = FileProvider.getUriForFile(this, getPackageName(), photoFile);
+                    photoUri = FileProvider.getUriForFile(this, "com.project.pulp.pulp.fileprovider", photoFile);
                     intent.putExtra(MediaStore.EXTRA_OUTPUT, photoUri);
                     startActivityForResult(intent, CAMERA_CODE);
                 }
@@ -305,7 +170,7 @@ public class PlusActivity extends AppCompatActivity {
 
     //사진 촬영 선택시, 사진이 저장될 폴더와 사진파일 생성.
     private File createImageFile() throws IOException {
-        File dir = new File(Environment.getExternalStorageDirectory() + "/pulpscrap/");
+        File dir = new File(Environment.getExternalStorageDirectory() + "/Pictures/pulpscrap/");
         //디렉토리 생성 /storage/emulated/0 (/sdcard)+ /pulpscrap/
         //파일생성을 위해서는 new File로 객체 생성후 createNewFile()함수를 실행시켜야 파일로 생성이 된다.
         //설명 - https://qkrrudtjr954.github.io/java/2017/11/13/create-file-and-file-method.html
@@ -319,16 +184,9 @@ public class PlusActivity extends AppCompatActivity {
         //설명 - http://bvc12.tistory.com/168, https://developer.android.com/reference/java/text/SimpleDateFormat
         mImageCaptureName = timeStamp + ".png";
 
-        File storageDir = new File(Environment.getExternalStorageDirectory().getAbsoluteFile() + "/pulpscrap/"
+        File storageDir = new File(Environment.getExternalStorageDirectory().getAbsoluteFile() + "/Pictures/pulpscrap/"
                 + mImageCaptureName);
         currentPhotoPath = storageDir.getAbsolutePath();
-        //getAbsolutePath() 절대경로 String형 반환
-        //getAbsoluteFile() 절대경로 File형 반환
-        //Environment.getExternalStorageDirectory()[file 반환]
-        //Environment.getExternalStorageDirectory().getAbsolutePath()[String 반환]
-        //Environment.getExternalStorageDirectory().getAbsoluteFile()[file 반환]
-        //세 가지 모두 같은경로를 반환한다.
-
         return storageDir;
     }
 
@@ -360,7 +218,6 @@ public class PlusActivity extends AppCompatActivity {
     }
 
     private void sendPicture(Uri imgUri) {
-
 
         if (imgUri==null){
             //imagePath=하나 샘플??;
@@ -415,12 +272,6 @@ public class PlusActivity extends AppCompatActivity {
         }
 
         ivImage.setImageBitmap(rotate(bitmap, exifDegree));//이미지 뷰에 비트맵 넣기*/
-        /*
-        blob타입으로 저장. but,실패함.
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        bitmap.compress(Bitmap.CompressFormat.PNG, 100, baos);
-        byte[] photo = baos.toByteArray();
-*/
 
     }
 
@@ -574,10 +425,6 @@ public class PlusActivity extends AppCompatActivity {
             super(context, "pulp", null,1);
             this.context = context;
         }
-        /** * Database가 존재하지 않을 때, 딱 한번 실행된다.
-         * DB를 만드는 역할을 한다.
-         출처: http://cocomo.tistory.com/409 [Cocomo Coding]
-         */
 
         @Override
         public void onCreate(SQLiteDatabase db) {
@@ -598,11 +445,17 @@ public class PlusActivity extends AppCompatActivity {
             Cursor cursor;
             cursor = sqlDB.rawQuery("select max(num) from scrap where subject="+folderNum+"", null);
 
+            int MaxNum=1;
             while (cursor.moveToNext()){
-                stMaxNum = cursor.getString(0);
-            }
+                MaxNum=cursor.getInt(0);
+                MaxNum=MaxNum+1;
 
-            int MaxNum = Integer.parseInt(stMaxNum);
+            }
+            return MaxNum;
+
+            //stMaxNum가 없으면 null이 떠서 에러.
+/*
+            int MaxNum=Integer.parseInt(stMaxNum);
 
             if (MaxNum==0){
                 MaxNum=1;
@@ -610,7 +463,7 @@ public class PlusActivity extends AppCompatActivity {
             } else {
                 MaxNum=+1;
                 return MaxNum;
-            }
+            }*/
         }
 
 
