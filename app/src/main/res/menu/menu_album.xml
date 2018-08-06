@@ -3,10 +3,10 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:context="com.example.yjkim.pulp1.AlbumActivity">
 
-    <item android:title="환경설정"
+    <item android:title="최신순으로 보기"
         app:showAsAction="never"
         android:id="@+id/action_settings"/>
-    <item android:title="나가기"
+    <item android:title="작성순으로 보기"
         app:showAsAction="never"
         android:id="@+id/action_quit"/>
 

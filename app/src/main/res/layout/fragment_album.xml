@@ -12,9 +12,9 @@
         android:layout_height="match_parent"
         android:layout_width="match_parent"
         android:layout_marginBottom="15dp"
-        android:layout_marginLeft="30dp"
-        android:layout_marginRight="30dp"
-        android:layout_marginTop="15dp">
+        android:layout_marginLeft="25dp"
+        android:layout_marginRight="25dp"
+        >
 
         <ImageView
             android:id="@+id/img_viewpager_childimage"
@@ -22,12 +22,15 @@
             android:layout_width="match_parent"
             android:layout_weight="6" />
 
-        <EditText android:layout_height="0dp"
+        <TextView
+            android:padding="7dp"
+            android:layout_height="0dp"
             android:layout_width="match_parent"
             android:id="@+id/albumMemo"
             android:layout_marginTop="15dp"
             android:layout_weight="3"
             android:background="#ddf5dd"
+            android:textSize="22dp"
             android:lines="7"/>
     </LinearLayout>
 

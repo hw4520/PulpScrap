@@ -6,7 +6,12 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.Matrix;
+import android.media.ExifInterface;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -25,6 +30,8 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import java.io.IOException;
 
 public class AlbumActivity extends AppCompatActivity {
 
@@ -55,6 +62,8 @@ public class AlbumActivity extends AppCompatActivity {
     //버튼 3가지
     ImageView btnplus, btnminus, btnlist;
 
+    boolean orderCheck = true;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -84,6 +93,7 @@ public class AlbumActivity extends AppCompatActivity {
 
         while (cursor.moveToNext()){
             countNum = cursor.getInt(0);
+            Log.v("countNum", countNum+"");
         }
         if(countNum==0){
             Intent insertMemo = new Intent(getApplicationContext(), PlusActivity.class);
@@ -97,7 +107,6 @@ public class AlbumActivity extends AppCompatActivity {
         //PagerAdapter를 상속받은 CustomAdapter 객체 생성
         //CustomAdapter에게 LayoutInflater 객체 전달
         CustomAdapter adapter = new CustomAdapter(getLayoutInflater());
-
         //ViewPager에 Adapter 설정
         pager.setAdapter(adapter);
 
@@ -110,6 +119,7 @@ public class AlbumActivity extends AppCompatActivity {
             public void onClick(View view) {
                 Intent intentGo= new Intent(getApplicationContext(), PlusActivity.class);
                 startActivity(intentGo);
+                finish();
             }
         });
 
@@ -122,19 +132,21 @@ public class AlbumActivity extends AppCompatActivity {
         return true;
     }
 
-
     // 메뉴 기능 넣어주기
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
 
         int id = item.getItemId();
+        CustomAdapter adapter = new CustomAdapter(getLayoutInflater());
 
         switch (id){
             case R.id.action_settings:
-                Toast.makeText(this, "환경설정을 눌렀습니다.", Toast.LENGTH_SHORT).show();
+                orderCheck = true;
+                pager.setAdapter(adapter);
                 break;
             case R.id.action_quit:
-                Toast.makeText(this, "나가기를 눌렀습니다.", Toast.LENGTH_SHORT).show();
+                orderCheck = false;
+                pager.setAdapter(adapter);
                 break;
         }
 
@@ -145,6 +157,7 @@ public class AlbumActivity extends AppCompatActivity {
 
         return super.onOptionsItemSelected(item);
     } // end of Menu Option 설정
+
 
     public class CustomAdapter extends PagerAdapter {
         LayoutInflater inflater;
@@ -160,7 +173,6 @@ public class AlbumActivity extends AppCompatActivity {
         public int getCount() {
             return countNum; //이미지 개수 리턴(그림이 10개라서 10을 리턴)
         }
-
         //ViewPager가 현재 보여질 Item(View객체)를 생성할 필요가 있는 때 자동으로 호출
         //쉽게 말해, 스크롤을 통해 현재 보여져야 하는 View를 만들어냄.
         //첫번째 파라미터 : ViewPager
@@ -169,26 +181,51 @@ public class AlbumActivity extends AppCompatActivity {
         public Object instantiateItem(ViewGroup container, int position) {
             View view=null;
             String albuMemo=null;
+            String sql;
+
+            String imagePath = null;
 
             //새로운 View 객체를 Layoutinflater를 이용해서 생성
             //만들어질 View의 설계는 res폴더>>layout폴더>>viewpater_childview.xml 레이아웃 파일 사용
             view= inflater.inflate(R.layout.fragment_album, null);
 
-            cursor = sqliteDatabase.rawQuery("select memo from scrap where num=((select max(num) from scrap)-"+position+") and subject="+folderNum+"", null);
+            TextView albumMemo = (TextView)view.findViewById(R.id.albumMemo);
+            ImageView img= (ImageView)view.findViewById(R.id.img_viewpager_childimage);
+
+
+
+
+            if (orderCheck){
+               sql = "select memo, photo from scrap where num=((select max(num) from scrap)-"+position+") and subject="+folderNum;
+            } else {
+                sql = "select memo, photo from scrap where num=("+position+"+1) and subject="+folderNum;
+            }
+            cursor = sqliteDatabase.rawQuery(sql, null);
             while (cursor.moveToNext()){
                 albuMemo = cursor.getString(0);
+                albumMemo.setText(albuMemo);
+                imagePath=cursor.getString(1);
+
             }
+
             //만들어진 View안에 있는 ImageView 객체 참조
             //위에서 inflated 되어 만들어진 view로부터 findViewById()를 해야 하는 것에 주의.
-            ImageView img= (ImageView)view.findViewById(R.id.img_viewpager_childimage);
-            TextView albumMemo = (TextView)view.findViewById(R.id.albumMemo);
-            albumMemo.setText(albuMemo);
 
             //ImageView에 현재 position 번째에 해당하는 이미지를 보여주기 위한 작업
             //현재 position에 해당하는 이미지를 setting
-            img.setImageResource(R.drawable.gametitle_01+position);
 
 
+            ExifInterface exif = null;
+            try {
+                exif = new ExifInterface(imagePath);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            int exifOrientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
+            int exifDegree = exifOrientationToDegrees(exifOrientation);
+
+            Bitmap bitmap = BitmapFactory.decodeFile(imagePath);//경로를 통해 비트맵으로 전환
+            img.setImageBitmap(rotate(bitmap, exifDegree));
 
             //ViewPager에 만들어 낸 View 추가
             container.addView(view);
@@ -292,7 +329,8 @@ public class AlbumActivity extends AppCompatActivity {
             cursor = sqliteDatabase.rawQuery("select count(*) from scrap where subject="+folderNum+"",null);
 
             while (cursor.moveToNext()){
-                count = cursor.getString(0);
+                int count = cursor.getInt(0);
+                Log.v("counts",count+"");
             }
             int viewNum = Integer.parseInt(count);
             return viewNum;
@@ -301,5 +339,27 @@ public class AlbumActivity extends AppCompatActivity {
 
     } // end of 디비 설정
 
+
+
+    private int exifOrientationToDegrees(int exifOrientation) {
+        if (exifOrientation == ExifInterface.ORIENTATION_ROTATE_90) {
+            return 90;
+        } else if (exifOrientation == ExifInterface.ORIENTATION_ROTATE_180) {
+            return 180;
+        } else if (exifOrientation == ExifInterface.ORIENTATION_ROTATE_270) {
+            return 270;
+        }
+        return 0;
+    }
+
+    private Bitmap rotate(Bitmap src, float degree) {
+        // Matrix 객체 생성
+        Matrix matrix = new Matrix();
+        // 회전 각도 셋팅
+        matrix.postRotate(degree);
+        // 이미지와 Matrix 를 셋팅해서 Bitmap 객체 생성
+        return Bitmap.createBitmap(src, 0, 0, src.getWidth(),
+                src.getHeight(), matrix, true);
+    }
 
 } // ★ CLASS ★

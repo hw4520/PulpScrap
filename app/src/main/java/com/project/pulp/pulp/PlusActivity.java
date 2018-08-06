@@ -50,7 +50,7 @@ public class PlusActivity extends AppCompatActivity {
     myDBHelper myHelper;
     SQLiteDatabase sqlDB;
 
-    int folderNum=1;
+    int folderNum=3;
 
     // MaxNum 구하는 변수
     int maxNum;
@@ -87,6 +87,8 @@ public class PlusActivity extends AppCompatActivity {
 
                 sqlDB.close();
 
+                Intent i = new Intent(PlusActivity.this, AlbumActivity.class);
+                startActivityForResult(i, 1);
                 finish();
 
             }
@@ -453,7 +455,7 @@ public class PlusActivity extends AppCompatActivity {
             }
             return MaxNum;
 
-            //stMaxNum가 없으면 null이 떠서 에러.
+            //stMaxNum가 없으면 null이 떠서 에러..
 /*
             int MaxNum=Integer.parseInt(stMaxNum);
 

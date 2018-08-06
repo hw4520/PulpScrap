@@ -34,7 +34,8 @@
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginTop="60dp">
+        android:layout_marginTop="15dp"
+        >
 
         <android.support.v4.view.ViewPager
             android:id="@+id/pager"
@@ -67,7 +68,6 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:layout_marginLeft="10dp"
-            android:layout_marginTop="20dp"
             >
             <ImageView
                 android:id="@+id/btnplus"

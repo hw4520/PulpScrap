@@ -114,6 +114,9 @@ public class MainActivity extends AppCompatActivity {
                 //디비에 입력
                 sqLiteDatabase = myDBHelper.getWritableDatabase();
                 sqLiteDatabase.execSQL("insert into folder (subject) values"+"('"+value+"')");
+                sqLiteDatabase.execSQL("create table IF NOT EXISTS scrap " +
+                        "(subject INTEGER, num INTEGER, photo char(500), memo char(100));");
+
             }
         });
         //입력창
