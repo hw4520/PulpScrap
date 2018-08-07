@@ -191,15 +191,15 @@ public class MainActivity extends AppCompatActivity {
                     linearLayout.setLayoutParams(layoutParams);
                     int currentLayout = i + 1;
                     int startRow = (currentLayout-1)*layoutSize+1-1;//startRow-1해서 대입
-                    cursor = sqLiteDatabase.rawQuery("select subject from folder order by num desc LIMIT "+startRow+","+layoutSize,null);
+                    cursor = sqLiteDatabase.rawQuery("select subject, num from folder order by num desc LIMIT "+startRow+","+layoutSize,null);
                     while (cursor.moveToNext()){
                         //폴더명 띄우기
                         folderName = cursor.getString(0);
+                        floderNum = cursor.getInt(1);
                         TextView txt = new TextView(MainActivity.this);
                         txt.setText(folderName);
                         txt.setTextSize(30);
                         txt.setTypeface(Typeface.SANS_SERIF,Typeface.BOLD);
-                        Log.v("val2", folderName);
 
                         //폴더 이미지 넣기
                         ImageView imageView = new ImageView(MainActivity.this);
@@ -225,19 +225,13 @@ public class MainActivity extends AppCompatActivity {
 
                         relativeLayout.addView(imageView);
                         relativeLayout.addView(txt);
+                        relativeLayout.setTag(floderNum);
                         linearLayout.addView(relativeLayout);
 
-                        floderNum = myDBHelper.folderNum(folderName);
 
-                        relativeLayout.setOnClickListener(new View.OnClickListener() {
-                            @Override
-                            public void onClick(View v) {
-                                Intent intent = new Intent(getApplicationContext(), AlbumActivity.class);
-                                intent.putExtra("folderNum", floderNum);
-                                startActivity(intent);
-
-                            }
-                        });
+                        relativeLayout.setOnClickListener(
+                                new pageNumClick()
+                        );
 
                     }//while
 
@@ -249,6 +243,16 @@ public class MainActivity extends AppCompatActivity {
             sqLiteDatabase.close();
         }
     }//end class
+
+    public class pageNumClick implements View.OnClickListener{
+
+        @Override
+        public void onClick(View v) {
+            Intent intent = new Intent(getApplicationContext(), AlbumActivity.class);
+            intent.putExtra("folderNum", (Integer)v.getTag());
+            startActivity(intent);
+        }
+    }
 
     public class TextMode{
         public void run(){

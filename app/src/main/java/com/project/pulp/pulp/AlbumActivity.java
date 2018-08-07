@@ -51,7 +51,7 @@ public class AlbumActivity extends AppCompatActivity {
     int countNum, swipeNum;
 
     // Intent 받아온 num 값
-    int folderNum=3;
+    static int folderNum;
 
     // DB maxNum 구하는 메소드
     String stMaxNum;
@@ -73,8 +73,8 @@ public class AlbumActivity extends AppCompatActivity {
         pager = (ViewPager) findViewById(R.id.pager);
 
         Intent intent = getIntent();
-        /*folderNum = intent.getIntExtra("folderNum", 1);*/
-        Log.v("folderNum", folderNum+"");
+        folderNum = intent.getIntExtra("folderNum", 1);
+       Log.v("folderNum", folderNum+"");
 
         // 툴바 생성
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -97,8 +97,9 @@ public class AlbumActivity extends AppCompatActivity {
         }
         if(countNum==0){
             Intent insertMemo = new Intent(getApplicationContext(), PlusActivity.class);
-            //insertMemo.putExtra("folderNum", 3);
+            insertMemo.putExtra("folderNum", folderNum);
             startActivity(insertMemo);
+            finish();
         }
 
         //ViewPager에 설정할 Adapter 객체 생성
@@ -110,6 +111,7 @@ public class AlbumActivity extends AppCompatActivity {
         //ViewPager에 Adapter 설정
         pager.setAdapter(adapter);
 
+
         btnplus=(ImageView) findViewById(R.id.btnplus);
         btnminus=(ImageView) findViewById(R.id.btnminus);
         btnlist=(ImageView) findViewById(R.id.btnlist);
@@ -118,8 +120,37 @@ public class AlbumActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 Intent intentGo= new Intent(getApplicationContext(), PlusActivity.class);
+                intentGo.putExtra("folderNum", folderNum);
                 startActivity(intentGo);
                 finish();
+            }
+        });
+
+        btnminus.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                sqliteDatabase = dbHelper.getWritableDatabase();
+                int position =  pager.getCurrentItem();
+                String sql;
+                String sql2;
+                Log.v("tagg",(Integer)pager.getCurrentItem()+"");
+
+                if (orderCheck){
+                    int ckmaxNum = dbHelper.getMaxNum()-position;
+                    sql = "delete from scrap where num=(select max(num) from scrap where subject="+folderNum+")-"+position+" and subject="+folderNum;
+                    sql2 = "update scrap set num=num-1 where num>(select max(num) from scrap where subject="+folderNum+")-"+position+" and subject="+folderNum;
+                } else {
+                    int ckmaxNum = position+1;
+                    sql = "delete from scrap where num="+ckmaxNum+" and subject="+folderNum;
+                    sql2 = "update scrap set num=num-1 where num>"+ckmaxNum+" and subject="+folderNum;
+                }
+                sqliteDatabase.execSQL(sql);
+                sqliteDatabase.execSQL(sql2);
+                Toast.makeText(AlbumActivity.this.getApplicationContext(),"삭제 완료되었습니다!",Toast.LENGTH_SHORT).show();
+
+
+                sqliteDatabase.close();
+
             }
         });
 
@@ -196,24 +227,26 @@ public class AlbumActivity extends AppCompatActivity {
 
 
             if (orderCheck){
-               sql = "select memo, photo from scrap where num=((select max(num) from scrap)-"+position+") and subject="+folderNum;
+               sql = "select memo, photo from scrap where num=((select max(num) from scrap where subject="+folderNum+")-"+position+") and subject="+folderNum;
             } else {
                 sql = "select memo, photo from scrap where num=("+position+"+1) and subject="+folderNum;
             }
             cursor = sqliteDatabase.rawQuery(sql, null);
             while (cursor.moveToNext()){
                 albuMemo = cursor.getString(0);
-                albumMemo.setText(albuMemo);
                 imagePath=cursor.getString(1);
+                Log.v("albuMemo", albuMemo+"");
 
             }
 
+            albumMemo.setText(albuMemo);
             //만들어진 View안에 있는 ImageView 객체 참조
             //위에서 inflated 되어 만들어진 view로부터 findViewById()를 해야 하는 것에 주의.
 
             //ImageView에 현재 position 번째에 해당하는 이미지를 보여주기 위한 작업
             //현재 position에 해당하는 이미지를 setting
 
+/*
 
             ExifInterface exif = null;
             try {
@@ -223,9 +256,16 @@ public class AlbumActivity extends AppCompatActivity {
             }
             int exifOrientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
             int exifDegree = exifOrientationToDegrees(exifOrientation);
+*/
+
+
 
             Bitmap bitmap = BitmapFactory.decodeFile(imagePath);//경로를 통해 비트맵으로 전환
-            img.setImageBitmap(rotate(bitmap, exifDegree));
+            //img.setImageBitmap(rotate(bitmap, exifDegree));
+            img.setImageBitmap(bitmap);
+
+
+
 
             //ViewPager에 만들어 낸 View 추가
             container.addView(view);
@@ -236,20 +276,20 @@ public class AlbumActivity extends AppCompatActivity {
         }
 
         //화면에 보이지 않은 View는파쾨를 해서 메모리를 관리함.
-        //첫번째 파라미터 : ViewPager
-        //두번째 파라미터 : 파괴될 View의 인덱스(가장 처음부터 0,1,2,3...)
-        //세번째 파라미터 : 파괴될 객체(더 이상 보이지 않은 View 객체)
-        @Override
-        public void destroyItem(ViewGroup container, int position, Object object) {
-            //ViewPager에서 보이지 않는 View는 제거
-            //세번째 파라미터가 View 객체 이지만 데이터 타입이 Object여서 형변환 실시
-            container.removeView((View)object);
-        }
+            //첫번째 파라미터 : ViewPager
+            //두번째 파라미터 : 파괴될 View의 인덱스(가장 처음부터 0,1,2,3...)
+            //세번째 파라미터 : 파괴될 객체(더 이상 보이지 않은 View 객체)
+            @Override
+            public void destroyItem(ViewGroup container, int position, Object object) {
+                //ViewPager에서 보이지 않는 View는 제거
+                //세번째 파라미터가 View 객체 이지만 데이터 타입이 Object여서 형변환 실시
+                container.removeView((View)object);
+            }
 
-        //instantiateItem() 메소드에서 리턴된 Ojbect가 View가  맞는지 확인하는 메소드
-        @Override
-        public boolean isViewFromObject(View v, Object obj) {
-            return v==obj;
+            //instantiateItem() 메소드에서 리턴된 Ojbect가 View가  맞는지 확인하는 메소드
+            @Override
+            public boolean isViewFromObject(View v, Object obj) {
+                return v==obj;
         }
     }
 
@@ -275,28 +315,20 @@ public class AlbumActivity extends AppCompatActivity {
             onCreate(sqLiteDatabase);
         }
 
-        // num 최대값 구하는 메소드
+
         public int getMaxNum(){
             sqliteDatabase = getReadableDatabase();
             Cursor cursor;
             cursor = sqliteDatabase.rawQuery("select max(num) from scrap where subject="+folderNum+"", null);
 
+            int MaxNum=1;
             while (cursor.moveToNext()){
-                stMaxNum = cursor.getString(0);
+                MaxNum=cursor.getInt(0);
+                MaxNum=MaxNum+1;
+
             }
-
-            int MaxNum = Integer.parseInt(stMaxNum);
-
-            if (MaxNum==0){
-                MaxNum=1;
-                return MaxNum;
-            } else {
-                MaxNum=+1;
-                return MaxNum;
-            }
-
+            return MaxNum;
         }
-
 
         // DB insert 메소드
         public void insertAlbum(String albuMemo, int maxNum){

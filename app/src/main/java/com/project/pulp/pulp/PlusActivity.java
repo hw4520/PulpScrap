@@ -50,7 +50,7 @@ public class PlusActivity extends AppCompatActivity {
     myDBHelper myHelper;
     SQLiteDatabase sqlDB;
 
-    int folderNum=3;
+    int folderNum;
 
     // MaxNum 구하는 변수
     int maxNum;
@@ -60,6 +60,10 @@ public class PlusActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_plus);
+
+        Intent intent = getIntent();
+        folderNum = intent.getIntExtra("folderNum", 1);
+        Log.v("folderNum", folderNum+"");
 
         myHelper=new myDBHelper(this);
         sqlDB=myHelper.getWritableDatabase();
@@ -77,10 +81,10 @@ public class PlusActivity extends AppCompatActivity {
 
                 String sql="";
                 if (currentPhotoPath==null){
-                    sql="insert into scrap(subject, photo, memo, num) values ('3','"+imagePath+"','"+tvnote.getText()+"', "+maxNum+")";
+                    sql="insert into scrap(subject, photo, memo, num) values ("+folderNum+",'"+imagePath+"','"+tvnote.getText()+"', "+maxNum+")";
 
                 }else {
-                    sql="insert into scrap(subject, photo, memo, num) values ('3','"+currentPhotoPath+"','"+tvnote.getText()+"', "+maxNum+")";
+                    sql="insert into scrap(subject, photo, memo, num) values ("+folderNum+", '"+currentPhotoPath+"','"+tvnote.getText()+"', "+maxNum+")";
                 }
                // sqlDB.execSQL("delete from scrap");
                 sqlDB.execSQL(sql);
@@ -88,6 +92,7 @@ public class PlusActivity extends AppCompatActivity {
                 sqlDB.close();
 
                 Intent i = new Intent(PlusActivity.this, AlbumActivity.class);
+                i.putExtra("folderNum", folderNum);
                 startActivityForResult(i, 1);
                 finish();
 
