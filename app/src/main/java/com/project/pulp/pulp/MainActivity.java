@@ -40,7 +40,7 @@ public class MainActivity extends AppCompatActivity {
     int countNum; // 총 폴더의 갯수
     int layoutSize = 2; //한 줄당 폴더 갯수
     int layoutCount; //레이아웃 갯수
-
+    int mode = 1;
     int floderNum;
     String folderName;
 
@@ -61,6 +61,7 @@ public class MainActivity extends AppCompatActivity {
                 layout.removeAllViewsInLayout();
                 GallaryMode gallaryMode = new GallaryMode();
                 gallaryMode.run();
+                mode=1;
                 return true;
             case 2 :
                 //텍스트모드로 정렬
@@ -75,6 +76,7 @@ public class MainActivity extends AppCompatActivity {
                 layout.addView(title);
                 TextMode textMode = new TextMode();
                 textMode.run();
+                mode = 2;
                 return true;
         }
         return true;
@@ -116,6 +118,26 @@ public class MainActivity extends AppCompatActivity {
                 sqLiteDatabase.execSQL("insert into folder (subject) values"+"('"+value+"')");
                 sqLiteDatabase.execSQL("create table IF NOT EXISTS scrap " +
                         "(subject INTEGER, num INTEGER, photo char(500), memo char(100));");
+
+
+                //다시 정렬
+                if(mode==2){
+                    layout.removeAllViewsInLayout();
+                    TextView title = new TextView(MainActivity.this);
+                    LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT,
+                            LinearLayout.LayoutParams.MATCH_PARENT);
+                    params.setMargins(10,10,10,30);
+                    title.setText("폴더 리스트");
+                    title.setTextSize(50);
+                    title.setLayoutParams(params);
+                    layout.addView(title);
+                    TextMode textMode = new TextMode();
+                    textMode.run();
+                }else {
+                    layout.removeAllViewsInLayout();
+                    GallaryMode gallaryMode = new GallaryMode();
+                    gallaryMode.run();
+                }
 
             }
         });
