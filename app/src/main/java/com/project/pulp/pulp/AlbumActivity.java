@@ -330,6 +330,7 @@ public class AlbumActivity extends AppCompatActivity {
                          @Override
                          public void onClick(DialogInterface dialog, int which) {
                              selectPhoto();
+
                          }
                      });
 
@@ -647,17 +648,17 @@ public class AlbumActivity extends AppCompatActivity {
 
         }else{
             imagePath = getRealPathFromURI(imgUri); // path 경로
-            ExifInterface exif = null;
-            try {
-                exif = new ExifInterface(imagePath);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            int exifOrientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
-            int exifDegree = exifOrientationToDegrees(exifOrientation);
 
-            Bitmap bitmap = BitmapFactory.decodeFile(imagePath);//경로를 통해 비트맵으로 전환
-            img.setImageBitmap(rotate(bitmap, exifDegree));//이미지 뷰에 비트맵 넣기
+            albumUpdate();
+
+
+            Toast.makeText(AlbumActivity.this.getApplicationContext(),
+                    "스크랩 내용을 수정하였습니다!",Toast.LENGTH_SHORT).show();
+
+            int position = pager.getCurrentItem();
+            pager.setAdapter(adapter);
+            pager.setCurrentItem(position); // this is suppose to be your pagePosition
+
 
         }
     }
