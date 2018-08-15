@@ -1,8 +1,12 @@
 package com.project.pulp.pulp;
 
+import android.Manifest;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
@@ -12,15 +16,23 @@ import android.graphics.Color;
 import android.graphics.Matrix;
 import android.media.ExifInterface;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
+import android.provider.MediaStore;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.app.FragmentStatePagerAdapter;
+import android.support.v4.content.FileProvider;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.text.InputType;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -28,16 +40,30 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.File;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class AlbumActivity extends AppCompatActivity {
+
+    private Uri photoUri;
+    private Uri cameraUri;
+    private Uri galleryUri;
+    private String currentPhotoPath;//실제 사진 파일 경로
+    String imagePath=null;//갤러리에서 들고오는 사진경로
+    String mImageCaptureName;//이미지 이름
+    private final int GALLERY_CODE = 1112;
+    private final int CAMERA_CODE = 1111;//'CAMERA_CODE'는 requestCode 선택한 사진에 대한 요청 값을 구분하는 용도
 
 
     // activity_swipe.xml 뷰 페이지 변수 선언
     ViewPager pager;
+    CustomAdapter adapter;
 
     // 변수값 받아오기
     TextView albumMemo;
@@ -45,6 +71,7 @@ public class AlbumActivity extends AppCompatActivity {
     // SQLite 변수 생성
     SQLiteDatabase sqliteDatabase;
     DBHelper dbHelper;
+    Cursor cursor;
 
     // DB 컬럼 개수
     String count;
@@ -57,17 +84,21 @@ public class AlbumActivity extends AppCompatActivity {
     String stMaxNum;
     int MaxNum;
 
-    Cursor cursor;
-
     //버튼 3가지
     ImageView btnplus, btnminus, btnlist;
 
+    // 정렬 boolean 변수 선언
     boolean orderCheck = true;
+
+
+    ImageView img;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_album);
+
 
         // activity_swipe.xml 뷰 페이지 변수 값 받기
         pager = (ViewPager) findViewById(R.id.pager);
@@ -107,10 +138,10 @@ public class AlbumActivity extends AppCompatActivity {
         //다만. ViewPager로 스크롤 될 수 있도록 되어 있다는 것이 다름
         //PagerAdapter를 상속받은 CustomAdapter 객체 생성
         //CustomAdapter에게 LayoutInflater 객체 전달
-        CustomAdapter adapter = new CustomAdapter(getLayoutInflater());
+        adapter = new CustomAdapter(getLayoutInflater());
         //ViewPager에 Adapter 설정
         pager.setAdapter(adapter);
-
+        //albumMemo = (TextView)pager.findViewById(R.id.albumMemo);
 
         btnplus=(ImageView) findViewById(R.id.btnplus);
         btnminus=(ImageView) findViewById(R.id.btnminus);
@@ -146,15 +177,49 @@ public class AlbumActivity extends AppCompatActivity {
                 }
                 sqliteDatabase.execSQL(sql);
                 sqliteDatabase.execSQL(sql2);
+
+
                 Toast.makeText(AlbumActivity.this.getApplicationContext(),"삭제 완료되었습니다!",Toast.LENGTH_SHORT).show();
 
+                onResume();
 
-                sqliteDatabase.close();
 
             }
         });
 
+
+
+
     } // end of onCreate 메소드
+
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        sqliteDatabase = dbHelper.getReadableDatabase();
+        Cursor cursor;
+        cursor = sqliteDatabase.rawQuery("select count(*) from scrap where subject="+folderNum+"",null);
+
+        while (cursor.moveToNext()){
+            countNum = cursor.getInt(0);
+            Log.v("countNum", countNum+"");
+        }
+        if(countNum==0){
+            Intent insertMemo = new Intent(getApplicationContext(), PlusActivity.class);
+            insertMemo.putExtra("folderNum", folderNum);
+            startActivity(insertMemo);
+            finish();
+        }
+
+        CustomAdapter adapter = new CustomAdapter(getLayoutInflater());
+        //ViewPager에 Adapter 설정
+        pager.setAdapter(adapter);
+
+        checkPermissionF();
+
+    }
+
 
     // 생성한 툴바에 메뉴 넣어주기
     @Override
@@ -214,17 +279,14 @@ public class AlbumActivity extends AppCompatActivity {
             String albuMemo=null;
             String sql;
 
-            String imagePath = null;
+            imagePath = null;
 
             //새로운 View 객체를 Layoutinflater를 이용해서 생성
             //만들어질 View의 설계는 res폴더>>layout폴더>>viewpater_childview.xml 레이아웃 파일 사용
             view= inflater.inflate(R.layout.fragment_album, null);
 
             TextView albumMemo = (TextView)view.findViewById(R.id.albumMemo);
-            ImageView img= (ImageView)view.findViewById(R.id.img_viewpager_childimage);
-
-
-
+            img= (ImageView)view.findViewById(R.id.img_viewpager_childimage);
 
             if (orderCheck){
                sql = "select memo, photo from scrap where num=((select max(num) from scrap where subject="+folderNum+")-"+position+") and subject="+folderNum;
@@ -240,14 +302,8 @@ public class AlbumActivity extends AppCompatActivity {
             }
 
             albumMemo.setText(albuMemo);
-            //만들어진 View안에 있는 ImageView 객체 참조
-            //위에서 inflated 되어 만들어진 view로부터 findViewById()를 해야 하는 것에 주의.
-
-            //ImageView에 현재 position 번째에 해당하는 이미지를 보여주기 위한 작업
-            //현재 position에 해당하는 이미지를 setting
 
 /*
-
             ExifInterface exif = null;
             try {
                 exif = new ExifInterface(imagePath);
@@ -258,22 +314,120 @@ public class AlbumActivity extends AppCompatActivity {
             int exifDegree = exifOrientationToDegrees(exifOrientation);
 */
 
-
-
             Bitmap bitmap = BitmapFactory.decodeFile(imagePath);//경로를 통해 비트맵으로 전환
             //img.setImageBitmap(rotate(bitmap, exifDegree));
             img.setImageBitmap(bitmap);
 
 
+            img.setOnLongClickListener(new View.OnLongClickListener(){
+                 public boolean onLongClick(View v) {
+
+                     AlertDialog.Builder builder = new AlertDialog.Builder(AlbumActivity.this);
+                     builder.setTitle("업로드할 이미지 선택");
 
 
-            //ViewPager에 만들어 낸 View 추가
+                     builder.setPositiveButton("사진촬영", new DialogInterface.OnClickListener() {
+                         @Override
+                         public void onClick(DialogInterface dialog, int which) {
+                             selectPhoto();
+
+                         }
+                     });
+
+                     builder.setNeutralButton("앨범선택", new DialogInterface.OnClickListener() {
+                         @Override
+                         public void onClick(DialogInterface dialog, int which) {
+                             selectGallery();
+                         }
+                     });
+
+                     builder.setNegativeButton("취소",
+                             new DialogInterface.OnClickListener() {
+                                 @Override
+                                 public void onClick(DialogInterface dialog, int which) {
+                                     dialog.dismiss(); //닫기
+                                 }
+                             });
+
+
+                     AlertDialog alert = builder.create();
+                     alert.show();
+
+                     return true;
+                 }
+            });
+
+
+            albumMemo.setOnLongClickListener(new View.OnLongClickListener() {
+                @Override
+                public boolean onLongClick(View v) {
+
+                    AlertDialog.Builder builder = new AlertDialog.Builder(AlbumActivity.this);
+                    builder.setTitle("스크랩 메모");
+
+                    final EditText input = new EditText(AlbumActivity.this);
+
+                    input.setInputType(InputType.TYPE_CLASS_TEXT);
+                    input.setSingleLine(false);
+                    input.setLines(5);
+                    input.setMaxLines(6);
+                    input.setGravity(Gravity.LEFT | Gravity.TOP);
+                    input.setHorizontalFadingEdgeEnabled(false);
+                    builder.setView(input);
+
+                    builder.setPositiveButton("수정하기", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int whichButton) {
+                            //String sql="";
+                            int position =  pager.getCurrentItem();
+                            // Text 값 받아서 로그 남기기
+                            String updateMemo = input.getText().toString();  // Text 값 받기
+                            String SupdateMemo = updateMemo.replace("'","\"");
+
+                            if (orderCheck){
+                                sqliteDatabase.execSQL("UPDATE scrap SET memo='"+SupdateMemo+"' WHERE num=(select max(num) from scrap where subject=" +
+                                        folderNum+")-"+position+" and subject="+folderNum+";");
+                                //sql = "update scrap set memo="+updateMemo+" where num=(select max(num) from scrap where subject="+folderNum+")-"+position+" and subject="+folderNum;
+                            } else {
+                                sqliteDatabase.execSQL("UPDATE scrap SET memo='"+SupdateMemo+"' where num=("
+                                +position+"+1) and subject="+folderNum+";");
+
+                                //sql = "update scrap set memo="+updateMemo+" where num=("+position+"+1) and subject="+folderNum;
+                            }
+
+                            Toast.makeText(AlbumActivity.this.getApplicationContext(),"스크랩 내용을 수정하였습니다!",Toast.LENGTH_SHORT).show();
+
+                            dialog.dismiss();     //닫기
+
+                            pager.setAdapter(adapter);
+                            pager.setCurrentItem(position); // this is suppose to be your pagePosition
+
+
+
+                        }
+                    });
+
+                    builder.setNegativeButton("취소",
+                            new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    dialog.dismiss(); //닫기
+                                }
+                            });
+
+                    AlertDialog alert = builder.create();
+                    alert.show();
+
+                    return true;
+                }
+
+
+            });
+
             container.addView(view);
-
-            //Image가 세팅된 View를 리턴
 
             return view;
         }
+
 
         //화면에 보이지 않은 View는파쾨를 해서 메모리를 관리함.
             //첫번째 파라미터 : ViewPager
@@ -291,7 +445,9 @@ public class AlbumActivity extends AppCompatActivity {
             public boolean isViewFromObject(View v, Object obj) {
                 return v==obj;
         }
+
     }
+
 
 
     // SQLite 메소드 설정
@@ -334,7 +490,6 @@ public class AlbumActivity extends AppCompatActivity {
         public void insertAlbum(String albuMemo, int maxNum){
             sqliteDatabase = getWritableDatabase();
             sqliteDatabase.execSQL("insert into scrap (subject, num, memo) values ("+folderNum+", "+maxNum+", '"+albuMemo+"');");
-            Log.v("albuMemo", albuMemo);
         }
 
 
@@ -362,7 +517,6 @@ public class AlbumActivity extends AppCompatActivity {
 
             while (cursor.moveToNext()){
                 int count = cursor.getInt(0);
-                Log.v("counts",count+"");
             }
             int viewNum = Integer.parseInt(count);
             return viewNum;
@@ -371,6 +525,178 @@ public class AlbumActivity extends AppCompatActivity {
 
     } // end of 디비 설정
 
+
+
+
+    // 앨범 업데이트 구문
+    public void albumUpdate(){
+        int position = pager.getCurrentItem();
+
+        if (currentPhotoPath == null) {
+            if (orderCheck) {
+                sqliteDatabase.execSQL("UPDATE scrap SET photo='" + imagePath + "' WHERE num=(select max(num) from scrap where subject=" +
+                        folderNum + ")-" + position + " and subject=" + folderNum + ";");
+                //sql = "update scrap set memo="+updateMemo+" where num=(select max(num) from scrap where subject="+folderNum+")-"+position+" and subject="+folderNum;
+            } else {
+                sqliteDatabase.execSQL("UPDATE scrap SET photo='" + imagePath + "' where num=("
+                        + position + "+1) and subject=" + folderNum + ";");
+
+                //sql = "update scrap set memo="+updateMemo+" where num=("+position+"+1) and subject="+folderNum;
+            }
+        } else {
+            if (orderCheck) {
+                sqliteDatabase.execSQL("UPDATE scrap SET photo='" + currentPhotoPath + "' WHERE num=(select max(num) from scrap where subject=" +
+                        folderNum + ")-" + position + " and subject=" + folderNum + ";");
+                //sql = "update scrap set memo="+updateMemo+" where num=(select max(num) from scrap where subject="+folderNum+")-"+position+" and subject="+folderNum;
+            } else {
+                sqliteDatabase.execSQL("UPDATE scrap SET photo='" + currentPhotoPath + "' where num=("
+                        + position + "+1) and subject=" + folderNum + ";");
+
+                //sql = "update scrap set memo="+updateMemo+" where num=("+position+"+1) and subject="+folderNum;
+            }
+        }
+
+    }
+
+
+
+    // PlusActivity 객체 생성 여부 미정이라서 거기 있는 갤러리 관련 메소드를 전부 가져왔음
+    private void selectPhoto() {
+        String state = Environment.getExternalStorageState();
+        //외부저장소 sd카드가 이용가능한 상태인지 확인한다
+        //추가 설명 - http://apphappy.tistory.com/71, http://mainia.tistory.com/662
+
+        if (Environment.MEDIA_MOUNTED.equals(state)) {
+            //read,write가능상태일때 MEDIA_MOUNTED 상수
+            //read 가능 상태일때 MEDIA_MOUNTED_READ_ONLY 상수
+
+            Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+
+            if (intent.resolveActivity(getPackageManager()) != null) {
+                //인텐트를 받을 수 있는 컴포넌트가 존재하는지 확인. 암시적인텐트에서 사용
+                File photoFile = null;
+                try {
+                    photoFile = createImageFile();
+                    //사진폴더를 만들고 현재시각으로 이름지어진 파일을 생성하는 사용자 작성함수 createImageFile().
+                } catch (IOException ex) {
+                }
+                if (photoFile != null) {
+                    photoUri = FileProvider.getUriForFile(this, "com.project.pulp.pulp.fileprovider", photoFile);
+                    intent.putExtra(MediaStore.EXTRA_OUTPUT, photoUri);
+                    startActivityForResult(intent, CAMERA_CODE);
+                }
+            }
+        }else{
+            Toast.makeText(this, "SD카드가 사용불가능합니다.", Toast.LENGTH_SHORT);
+        }
+    }
+
+    //사진 촬영 선택시, 사진이 저장될 폴더와 사진파일 생성.
+    private File createImageFile() throws IOException {
+        File dir = new File(Environment.getExternalStorageDirectory() + "/Pictures/pulpscrap/");
+        //디렉토리 생성 /storage/emulated/0 (/sdcard)+ /pulpscrap/
+        //파일생성을 위해서는 new File로 객체 생성후 createNewFile()함수를 실행시켜야 파일로 생성이 된다.
+        //설명 - https://qkrrudtjr954.github.io/java/2017/11/13/create-file-and-file-method.html
+
+        if (!dir.exists()) {//File 클래스 함수 exists() - 파일이 존재하는가?
+            dir.mkdirs();//폴더가 존재하지 않으면 폴더 생성
+        }
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+        //java.text.SimpleDateFormat은 date타입 객체를 원하는 형태로 출력하게 해주는 클래스
+        //format()함수를 통해서 date객체를 StringBuffer로, parse함수를 통해서 String객체를 Date로 변환
+        //설명 - http://bvc12.tistory.com/168, https://developer.android.com/reference/java/text/SimpleDateFormat
+        mImageCaptureName = timeStamp + ".png";
+
+        File storageDir = new File(Environment.getExternalStorageDirectory().getAbsoluteFile() + "/Pictures/pulpscrap/"
+                + mImageCaptureName);
+        currentPhotoPath = storageDir.getAbsolutePath();
+        return storageDir;
+    }
+
+    private void selectGallery() {
+        Intent intent = new Intent(Intent.ACTION_PICK);
+        intent.setData(MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        intent.setType("image/*");
+        startActivityForResult(intent, GALLERY_CODE);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (resultCode == RESULT_OK) {
+            switch (requestCode) {
+                case GALLERY_CODE:
+                    galleryUri=data.getData();
+                    sendPicture(data.getData()); //갤러리에서 가져오기
+                    break;
+                case CAMERA_CODE:
+                    cameraUri=data.getData();
+                    getPictureForPhoto(data.getData()); //카메라에서 가져오기
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+
+    private void sendPicture(Uri imgUri) {
+
+        if (imgUri==null){
+            //imagePath=하나 샘플??;
+            Toast.makeText(this, "사진을 들고올 수 없습니다.",Toast.LENGTH_SHORT).show();
+
+        }else{
+            imagePath = getRealPathFromURI(imgUri); // path 경로
+
+            albumUpdate();
+
+
+            Toast.makeText(AlbumActivity.this.getApplicationContext(),
+                    "스크랩 내용을 수정하였습니다!",Toast.LENGTH_SHORT).show();
+
+            int position = pager.getCurrentItem();
+            pager.setAdapter(adapter);
+            pager.setCurrentItem(position); // this is suppose to be your pagePosition
+
+
+        }
+    }
+
+    private String getRealPathFromURI(Uri contentUri) {
+        int column_index=0;
+        String[] proj = {MediaStore.Images.Media.DATA};
+        Cursor cursor = getContentResolver().query(contentUri, proj, null, null, null);
+        if(cursor.moveToFirst()){
+            column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+        }
+
+        return cursor.getString(column_index);
+    }
+
+
+    private void getPictureForPhoto(Uri imgUri) {
+        Bitmap bitmap = BitmapFactory.decodeFile(currentPhotoPath);
+
+        ExifInterface exif = null;
+        try {
+            exif = new ExifInterface(currentPhotoPath);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        int exifOrientation;
+        int exifDegree;
+
+        if (exif != null) {
+            exifOrientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
+            exifDegree = exifOrientationToDegrees(exifOrientation);
+        } else {
+            exifDegree = 0;
+        }
+
+        img.setImageBitmap(rotate(bitmap, exifDegree));//이미지 뷰에 비트맵 넣기*/
+
+    }
 
 
     private int exifOrientationToDegrees(int exifOrientation) {
@@ -393,5 +719,104 @@ public class AlbumActivity extends AppCompatActivity {
         return Bitmap.createBitmap(src, 0, 0, src.getWidth(),
                 src.getHeight(), matrix, true);
     }
+
+    @Override
+    public void onPointerCaptureChanged(boolean hasCapture) {
+
+    }
+
+    final int M =23;
+
+    private void checkPermissionF() {
+
+        if (Build.VERSION.SDK_INT >= M) {
+            // only for LOLLIPOP and newer versions
+            System.out.println("Hello Marshmallow (마시멜로우)");
+            int permissionResult = getApplicationContext().checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+            int permissionResult2 = getApplicationContext().checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE);
+            int permissionResult3 = getApplicationContext().checkSelfPermission(Manifest.permission.CAMERA);
+
+            if (permissionResult == PackageManager.PERMISSION_DENIED||permissionResult2 == PackageManager.PERMISSION_DENIED||permissionResult3 == PackageManager.PERMISSION_DENIED) {
+                if (shouldShowRequestPermissionRationale(Manifest.permission.WRITE_EXTERNAL_STORAGE)||shouldShowRequestPermissionRationale(Manifest.permission.READ_EXTERNAL_STORAGE)||shouldShowRequestPermissionRationale(Manifest.permission.CAMERA)) {
+                    AlertDialog.Builder dialog = new AlertDialog.Builder(/*getApplicationContext()*/ AlbumActivity.this);
+
+                    dialog.setTitle("권한이 필요합니다.")
+                            .setMessage("단말기의 파일쓰기 권한이 필요합니다.\\n계속하시겠습니까?")
+                            .setPositiveButton("확인", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    if (Build.VERSION.SDK_INT >= M) {
+                                        System.out.println("감사합니다. 권한을 허락했네요 (마시멜로우)");
+                                        requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE,/*Manifest.permission.ACCESS_FINE_LOCATION,Manifest.permission.ACCESS_COARSE_LOCATION,*/Manifest.permission.READ_EXTERNAL_STORAGE,Manifest.permission.CAMERA}, 1);
+                                    }
+                                }
+                            })
+                            .setNegativeButton("취소", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    Toast.makeText(getApplicationContext(),"권한 요청 취소", Toast.LENGTH_SHORT).show();
+                                }
+                            })
+                            .create()
+                            .show();
+
+                    //최초로 권한을 요청할 때.
+                } else {
+                    System.out.println("최초로 권한을 요청할 때. (마시멜로우)");
+                    requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.ACCESS_FINE_LOCATION,Manifest.permission.ACCESS_COARSE_LOCATION,Manifest.permission.READ_EXTERNAL_STORAGE,Manifest.permission.CAMERA}, 1);
+                    //        getThumbInfo();
+                }
+            }else{
+                //권한이 있을 때.
+                //       getThumbInfo();
+            }
+
+
+        } else {
+            System.out.println("(마시멜로우 이하 버전입니다.)");
+            //   getThumbInfo();
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, /*@NonNull*/ String[] permissions, /*@NonNull*/ int[] grantResults) {
+
+        if (requestCode == 1) {
+            /* 요청한 권한을 사용자가 "허용"했다면 인텐트를 띄워라
+                내가 요청한 게 하나밖에 없기 때문에. 원래 같으면 for문을 돈다.*/
+/*            requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE,Manifest.permission.ACCESS_FINE_LOCATION,Manifest.permission.ACCESS_COARSE_LOCATION,
+                    Manifest.permission.READ_PHONE_STATE,Manifest.permission.READ_EXTERNAL_STORAGE}, 1);*/
+
+            for(int i = 0 ; i < permissions.length ; i++) {
+                if (grantResults.length > 0 && grantResults[i] == PackageManager.PERMISSION_GRANTED) {
+                    if (ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                        System.out.println("onRequestPermissionsResult WRITE_EXTERNAL_STORAGE ( 권한 성공 ) ");
+                    }
+                    if (ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                        System.out.println("onRequestPermissionsResult ACCESS_FINE_LOCATION ( 권한 성공 ) ");
+                    }
+                    if (ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                        System.out.println("onRequestPermissionsResult ACCESS_COARSE_LOCATION ( 권한 성공 ) ");
+                    }
+                    if (ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED) {
+                        System.out.println("onRequestPermissionsResult READ_PHONE_STATE ( 권한 성공 ) ");
+                    }
+                    if (ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                        System.out.println("onRequestPermissionsResult READ_EXTERNAL_STORAGE ( 권한 성공 ) ");
+                    }
+                    if (ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                        System.out.println("onRequestPermissionsResult CAMERA ( 권한 성공 ) ");
+                    }
+                }
+            }
+
+        } else {
+            System.out.println("onRequestPermissionsResult ( 권한 거부) ");
+            Toast.makeText(getApplicationContext(), "요청 권한 거부", Toast.LENGTH_SHORT).show();
+        }
+
+    }
+
+
 
 } // ★ CLASS ★

@@ -266,16 +266,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }//end class
 
-    public class pageNumClick implements View.OnClickListener{
-
-        @Override
-        public void onClick(View v) {
-            Intent intent = new Intent(getApplicationContext(), AlbumActivity.class);
-            intent.putExtra("folderNum", (Integer)v.getTag());
-            startActivity(intent);
-        }
-    }
-
     public class TextMode{
         public void run(){
             sqLiteDatabase = myDBHelper.getReadableDatabase();
@@ -294,9 +284,26 @@ public class MainActivity extends AppCompatActivity {
                 params.setMargins(10,10,10,50);
                 txt.setLayoutParams(params);
                 layout.addView(txt);
+
+                layout.setOnClickListener(
+                        new pageNumClick()
+                );
             }
             cursor.close();
             sqLiteDatabase.close();
         }
     }//end class
+
+
+
+    public class pageNumClick implements View.OnClickListener{
+
+        @Override
+        public void onClick(View v) {
+            Intent intent = new Intent(getApplicationContext(), AlbumActivity.class);
+            intent.putExtra("folderNum", (Integer)v.getTag());
+            startActivity(intent);
+        }
+    }
+
 }
